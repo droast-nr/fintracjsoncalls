@@ -27,6 +27,37 @@ curl -X 'PUT' \
   -H 'x-ms-blob-type: BlockBlob' \
   -H 'Content-Type: application/octet-stream' \
   --data-binary '@input.json.tmp'
+
+RETRY_TIMES=10
+RETRY_WAIT_SECONDS=1
+
+for (( i=1; i<=$RETRY_TIMES; i++ )); do
+  RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+    "https://www148.fintrac-canafe.canada.ca/reporting-ingest/api/v1/reports/validations?fileName=$BULK_FILENAME.json" \
+    -H 'accept: application/json' \
+    -H "Authorization: Bearer $ACCESS_TOKEN")
+
+  if [ "$RESPONSE_CODE" -eq 200 ]; then
+    echo "Success on attempt $i"
+    # If you want to capture the full response, you can do so here:
+    RESPONSE=$(curl -s \
+      "https://www148.fintrac-canafe.canada.ca/reporting-ingest/api/v1/reports/validations?fileName=$BULK_FILENAME.json" \
+      -H 'accept: application/json' \
+      -H "Authorization: Bearer $ACCESS_TOKEN")
+	  echo $RESPONSE
+    break
+  else
+    echo "Attempt $i failed with response code $RESPONSE_CODE"
+    if [ "$i" -lt "$RETRY_TIMES" ]; then
+      echo "Sleeping for $RETRY_WAIT_SECONDS seconds before retrying..."
+      sleep $RETRY_WAIT_SECONDS
+    else
+      echo "All $RETRY_TIMES attempts failed. Exiting."
+      exit 1
+    fi
+  fi
+done
+
   
 curl -X 'GET' \
   "https://www148.fintrac-canafe.canada.ca/reporting-ingest/api/v1/reports/validations?fileName=$BULK_FILENAME.json" \
