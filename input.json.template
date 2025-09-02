@@ -1,0 +1,12 @@
+{
+  "fileHeader": {
+    "submittingReportingEntityNumber": 12345,
+    "reportingEntityBulkReference": "BULK_PLACEHOLDER"
+  },
+  "reports": [
+  
+  .... INSERT STR or REPORT object here ....
+  
+    ]
+
+}
